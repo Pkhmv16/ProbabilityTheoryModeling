@@ -2,6 +2,8 @@
 #define PTM_PROBABILITYMEASURE_HPP_
 
 #include <vector>
+#include <stdexcept>
+#include <cmath>
 
 #include "Event.hpp"
 #include "OutcomeSpace.hpp"

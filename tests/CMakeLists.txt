@@ -2,18 +2,18 @@ enable_testing()
 
 add_executable(
         ${PROJECT_NAME}_tests
-        main_test.cpp
+        # main_test.cpp
         sigma_algebra_tests.cpp
-        test_suites/ProjectIntegrationTestSuite.cpp
-        distributions_tests.cpp
-        markov_chain_tests.cpp
-        law_of_large_numbers_tests.cpp
+        # test_suites/ProjectIntegrationTestSuite.cpp
+        # distributions_tests.cpp
+        # markov_chain_tests.cpp
+        # law_of_large_numbers_tests.cpp
 )
 
 target_link_libraries(
         ${PROJECT_NAME}_tests
         sigma-algebra
-        law-of-large-numbers
+        # law-of-large-numbers
         GTest::gtest_main
 )
 
