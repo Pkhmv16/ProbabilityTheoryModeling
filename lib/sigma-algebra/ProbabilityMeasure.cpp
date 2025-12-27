@@ -25,9 +25,6 @@ bool ProbabilityMeasure::IsValid(double eps) const {
     }
     double sum = 0.0;
     for (double p : atom_probs_) {
-        if (p < -eps) {
-        return false;
-        }
         sum += p;
     }
     return std::fabs(sum - 1.0) <= eps;
@@ -38,7 +35,7 @@ double ProbabilityMeasure::Probability(const Event& event) const {
     double result = 0.0;
     for (std::size_t i = 0; i < n; ++i) {
         if (event.Contains(i)) {
-        result += GetAtomicProbability(i);
+            result += GetAtomicProbability(i);
         }
     }
     return result;
