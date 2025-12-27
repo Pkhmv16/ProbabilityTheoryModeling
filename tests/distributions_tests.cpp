@@ -6,11 +6,12 @@
 #include "lib/distributions/BinomialDistribution.hpp"
 #include "lib/distributions/CauchyDistribution.hpp"
 #include "lib/distributions/DistributionExperiment.hpp"
+#include "lib/distributions/ExponentialDistribution.hpp"
+#include "lib/distributions/UniformDistribution.hpp"
 #include "lib/distributions/GeometricDistribution.hpp"
 #include "lib/distributions/LaplaceDistribution.hpp"
 #include "lib/distributions/NormalDistribution.hpp"
 #include "lib/distributions/PoissonDistribution.hpp"
-#include "lib/distributions/UniformDistribution.hpp"
 
 TEST(DistributionTest, NormalDistributionBasicProperties) {
   using namespace ptm;
@@ -70,6 +71,21 @@ TEST(DistributionTest, BinomialDistributionBasic) {
 
   EXPECT_NEAR(bd.TheoreticalMean(), 5.0, 1e-9);
   EXPECT_NEAR(bd.TheoreticalVariance(), 2.5, 1e-9);
+}
+
+TEST(DistributionTest, ExponentialDistributionBasic) {
+    using namespace ptm;
+
+    double lambda = 2;
+    ExponentialDistribution ex(lambda);
+
+    EXPECT_NEAR(ex.Pdf(1.0), 0.270670557, 1e-6);
+    EXPECT_NEAR(ex.Pdf(-1.0), 0, 1e-9);
+    EXPECT_NEAR(ex.Cdf(3.0), 0.9975212478, 1e-8);
+    EXPECT_NEAR(ex.Cdf(-1.0), 0, 1e-9);
+
+    EXPECT_NEAR(ex.TheoreticalMean(), 0.5, 1e-9);
+    EXPECT_NEAR(ex.TheoreticalVariance(), 0.25, 1e-9);
 }
 
 TEST(DistributionTest, GeometricDistributionBasic) {
