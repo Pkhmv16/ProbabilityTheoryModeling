@@ -7,11 +7,11 @@
 #include "lib/distributions/CauchyDistribution.hpp"
 #include "lib/distributions/DistributionExperiment.hpp"
 #include "lib/distributions/ExponentialDistribution.hpp"
-#include "lib/distributions/UniformDistribution.hpp"
 #include "lib/distributions/GeometricDistribution.hpp"
 #include "lib/distributions/LaplaceDistribution.hpp"
 #include "lib/distributions/NormalDistribution.hpp"
 #include "lib/distributions/PoissonDistribution.hpp"
+#include "lib/distributions/UniformDistribution.hpp"
 
 TEST(DistributionTest, NormalDistributionBasicProperties) {
   using namespace ptm;
@@ -74,18 +74,18 @@ TEST(DistributionTest, BinomialDistributionBasic) {
 }
 
 TEST(DistributionTest, ExponentialDistributionBasic) {
-    using namespace ptm;
+  using namespace ptm;
 
-    double lambda = 2;
-    ExponentialDistribution ex(lambda);
+  double lambda = 2;
+  ExponentialDistribution ex(lambda);
 
-    EXPECT_NEAR(ex.Pdf(1.0), 0.270670557, 1e-6);
-    EXPECT_NEAR(ex.Pdf(-1.0), 0, 1e-9);
-    EXPECT_NEAR(ex.Cdf(3.0), 0.9975212478, 1e-8);
-    EXPECT_NEAR(ex.Cdf(-1.0), 0, 1e-9);
+  EXPECT_NEAR(ex.Pdf(1.0), 0.270670557, 1e-6);
+  EXPECT_NEAR(ex.Pdf(-1.0), 0, 1e-9);
+  EXPECT_NEAR(ex.Cdf(3.0), 0.9975212478, 1e-8);
+  EXPECT_NEAR(ex.Cdf(-1.0), 0, 1e-9);
 
-    EXPECT_NEAR(ex.TheoreticalMean(), 0.5, 1e-9);
-    EXPECT_NEAR(ex.TheoreticalVariance(), 0.25, 1e-9);
+  EXPECT_NEAR(ex.TheoreticalMean(), 0.5, 1e-9);
+  EXPECT_NEAR(ex.TheoreticalVariance(), 0.25, 1e-9);
 }
 
 TEST(DistributionTest, GeometricDistributionBasic) {
@@ -149,4 +149,71 @@ TEST(DistributionExperimentTest, BinomialEmpiricalMean) {
   EXPECT_NEAR(stats.empirical_variance, dist->TheoreticalVariance(), 0.5);
 }
 
-// Add your tests...
+TEST(DistributionExperimentTest, KolmogorovDistanceZero) {
+  using namespace ptm;
+
+  std::mt19937 rng(1);
+  auto dist = std::make_shared<BernoulliDistribution>(1.0);
+  DistributionExperiment experiment(dist, 1000);
+  std::vector<double> grid = {0.0, 1.0};
+
+  auto empirical_cdf = experiment.EmpiricalCdf(grid, rng, 1000);
+  double d = experiment.KolmogorovDistance(grid, empirical_cdf);
+
+  EXPECT_NEAR(d, 0.0, 1e-12);
+}
+
+TEST(DistributionExperimentTest, EmpiricalCdfDoNotBreakPoint) {
+  using namespace ptm;
+
+  std::mt19937 rng(42);
+  auto dist = std::make_shared<NormalDistribution>(0.0, 1.0);
+  DistributionExperiment experiment(dist, 10000);
+
+  std::vector<double> grid;
+  for (int i = 0; i <= 100; ++i) {
+    grid.push_back(i);
+  }
+
+  auto cdf = experiment.EmpiricalCdf(grid, rng, 10000);
+
+  for (size_t i = 1; i < cdf.size(); ++i) {
+    EXPECT_LE(cdf[i - 1], cdf[i]);
+  }
+
+  for (double v : cdf) {
+    EXPECT_GE(v, 0.0);
+    EXPECT_LE(v, 1.0);
+  }
+}
+
+TEST(DistributionExperimentTest, KolmogorovDistanceDecreasesWithSampleSize) {
+  using namespace ptm;
+
+  std::mt19937 rng1(100);
+  std::mt19937 rng2(100);
+  auto dist = std::make_shared<NormalDistribution>(0.0, 1.0);
+  DistributionExperiment small(dist, 1000);
+  DistributionExperiment large(dist, 10000);
+  std::vector<double> grid = {-2, -1, 0, 1, 2};
+
+  double d1 = small.KolmogorovDistance(grid, small.EmpiricalCdf(grid, rng1, 1000));
+  double d2 = large.KolmogorovDistance(grid, large.EmpiricalCdf(grid, rng2, 10000));
+
+  EXPECT_GE(d1, d2);
+}
+
+TEST(DistributionExperimentTest, EmpiricalCdfCloseToTheoretical) {
+  using namespace ptm;
+
+  std::mt19937 rng(321);
+  auto dist = std::make_shared<UniformDistribution>(0.0, 1.0);
+  DistributionExperiment experiment(dist, 20000);
+  std::vector<double> grid = {0.25, 0.5, 0.75};
+  
+  auto cdf = experiment.EmpiricalCdf(grid, rng, 20000);
+
+  for (size_t i = 0; i < grid.size(); ++i) {
+    EXPECT_NEAR(cdf[i], dist->Cdf(grid[i]), 0.02);
+  }
+}
