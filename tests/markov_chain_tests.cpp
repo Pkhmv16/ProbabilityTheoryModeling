@@ -2,8 +2,8 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
-#include "lib/markov-chain/MarkovChain.hpp"
-#include "lib/markov-chain/MarkovTextModel.hpp"
+#include "../lib/markov-chain/MarkovChain.hpp"
+#include "../lib/markov-chain/MarkovTextModel.hpp"
 
 TEST(MarkovChainTest, SimpleCountsAndProbabilities) {
   using namespace ptm;
@@ -72,13 +72,13 @@ TEST(MarkovTextModelTest, CharacterLevelGeneration) {
 TEST(MarkovTextModelTest, TrainOnWarAndPeaceWordLevel) {
   using namespace ptm;
 
-  std::ifstream in("tests/data/war_and_peace.txt");
-  ASSERT_TRUE(in.good()) << "Не удалось открыть файл tests/data/war_and_peace_ru.txt";
+  std::ifstream in("war_and_peace.txt");
+  ASSERT_TRUE(in.good()) << "Couldn't open the file tests/war_and_peace.txt";
 
   std::stringstream buffer;
   buffer << in.rdbuf();
   std::string text = buffer.str();
-  ASSERT_FALSE(text.empty()) << "Файл войны и мира пустой";
+  ASSERT_FALSE(text.empty()) << "The war and peace file is empty";
 
   MarkovTextModel model(MarkovTextModel::TokenLevel::Word);
   model.TrainFromText(text);
@@ -86,21 +86,79 @@ TEST(MarkovTextModelTest, TrainOnWarAndPeaceWordLevel) {
   const auto& chain = model.Chain();
   auto states = chain.States();
 
-  EXPECT_GT(states.size(), 5000u) << "Слишком маленький словарь, похоже, текст обрезан";
+  EXPECT_GT(states.size(), 5000u) << "The dictionary is too small, and the text seems to be truncated.";
 
   auto has_token = [&](const std::string& token) { return std::ranges::find(states, token) != states.end(); };
 
-  EXPECT_TRUE(has_token("и")) << "Слово \"и\" не найдено в словаре";
-  EXPECT_TRUE(has_token("в")) << "Слово \"в\" не найдено в словаре";
-  EXPECT_TRUE(has_token("на")) << "Слово \"на\" не найдено в словаре";
+  EXPECT_TRUE(has_token("the")) << "The word \"the\" is not found in the dictionary";
+  EXPECT_TRUE(has_token("and")) << "The word \"and\" is not found in the dictionary";
+  EXPECT_TRUE(has_token("to")) << "The word \"to\" is not found in the dictionary";
 
   std::mt19937 rng(123);
 
-  std::string generated = model.GenerateText(50, rng, "и");
-  EXPECT_FALSE(generated.empty()) << "Сгенерированный текст пустой";
+  std::string generated = model.GenerateText(50, rng, "the");
+  EXPECT_FALSE(generated.empty()) << "The generated text is empty";
 
   std::size_t space_count = std::ranges::count(generated, ' ');
   EXPECT_GT(space_count, 5u);
+}
+
+TEST(MarkovChainTest, NextDistributionSumsToOneAndMatchesProbabilities) {
+  using namespace ptm;
+
+  MarkovChain chain;
+  chain.Train({"A", "B", "A", "C"}); 
+
+  auto dist = chain.NextDistribution("A");
+
+  double sum = 0.0;
+  for (const auto& [tok, p] : dist) sum += p;
+
+  EXPECT_NEAR(sum, 1.0, 1e-9);
+  EXPECT_NEAR(dist["B"], 0.5, 1e-9);
+  EXPECT_NEAR(dist["C"], 0.5, 1e-9);
+
+  
+  EXPECT_NEAR(chain.TransitionProbability("A", "B"), dist["B"], 1e-9);
+  EXPECT_NEAR(chain.TransitionProbability("A", "C"), dist["C"], 1e-9);
+}
+
+TEST(MarkovChainTest, UnknownStateGivesZeroProbabilityAndEmptyDistribution) {
+  using namespace ptm;
+
+  MarkovChain chain;
+  chain.Train({"A", "B"});
+
+  EXPECT_NEAR(chain.TransitionProbability("X", "Y"), 0.0, 1e-9);
+  EXPECT_NEAR(chain.TransitionProbability("A", "Y"), 0.0, 1e-9);
+
+  auto dist = chain.NextDistribution("X");
+  EXPECT_TRUE(dist.empty());
+}
+
+TEST(MarkovChainTest, SampleNextOnDeadEndReturnsNullopt) {
+  using namespace ptm;
+
+  MarkovChain chain;
+  chain.Train({"A", "B"}); 
+
+  std::mt19937 rng(123);
+  auto next = chain.SampleNext("B", rng);
+
+  EXPECT_FALSE(next.has_value());
+}
+
+TEST(MarkovChainTest, GenerateLengthOneReturnsOnlyStart) {
+  using namespace ptm;
+
+  MarkovChain chain;
+  chain.Train({"A", "B", "C"});
+
+  std::mt19937 rng(1);
+  auto seq = chain.Generate("A", 1, rng);
+
+  ASSERT_EQ(seq.size(), 1u);
+  EXPECT_EQ(seq[0], "A");
 }
 
 // Add your tests...
