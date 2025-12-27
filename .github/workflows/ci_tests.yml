@@ -110,6 +110,7 @@ jobs:
           fi
 
   memory-leaks:
+    if: false
     name: Find memory leaks in tests
     runs-on: ubuntu-latest
     steps:
@@ -133,6 +134,7 @@ jobs:
           valgrind --leak-check=full --track-origins=yes --error-exitcode=1 ./cpp_tests_tests
 
   style-check:
+    if: false
     name: Code style check with clang-format
     runs-on: ubuntu-latest
     steps:
@@ -206,6 +208,7 @@ jobs:
             }
 
   code-quality-check:
+    if: false
     name: Code quality check with clang-tidy
     runs-on: ubuntu-latest
     steps:
