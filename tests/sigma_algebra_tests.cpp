@@ -63,3 +63,94 @@ TEST(SigmaAlgebraTest, EventOperations) {
 }
 
 // Add your tests...
+
+TEST(SigmaAlgebraTest, IsSigmaAlgebra_Trivial) {
+  using namespace ptm;
+
+  OutcomeSpace omega;
+  omega.AddOutcome("1");
+  omega.AddOutcome("2");
+  omega.AddOutcome("3");
+
+  auto empty = Event::Empty(omega.GetSize());
+  auto full  = Event::Full(omega.GetSize());
+
+  SigmaAlgebra F(omega, {empty, full});
+  EXPECT_TRUE(F.IsSigmaAlgebra());
+}
+
+
+TEST(SigmaAlgebraTest, IsSigmaAlgebra_FailsWithoutComplement) {
+  using namespace ptm;
+
+  OutcomeSpace omega;
+  auto w0 = omega.AddOutcome("1");
+  auto w1 = omega.AddOutcome("2");
+  auto w2 = omega.AddOutcome("3");
+
+  // A = {1,3}
+  std::vector<bool> mask(omega.GetSize(), false);
+  mask[w0] = true;
+  mask[w2] = true;
+  Event A(mask);
+
+  auto empty = Event::Empty(omega.GetSize());
+  auto full  = Event::Full(omega.GetSize());
+
+  SigmaAlgebra F(omega, {empty, full, A});
+  EXPECT_FALSE(F.IsSigmaAlgebra());
+}
+
+TEST(SigmaAlgebraTest, IsSigmaAlgebra_FailsWithoutUnionClosure) {
+  using namespace ptm;
+
+  OutcomeSpace omega;
+  auto w0 = omega.AddOutcome("1");
+  auto w1 = omega.AddOutcome("2");
+  auto w2 = omega.AddOutcome("3");
+
+  auto empty = Event::Empty(omega.GetSize());
+  auto full  = Event::Full(omega.GetSize());
+
+  std::vector<bool> mA(omega.GetSize(), false), mB(omega.GetSize(), false);
+  mA[w0] = true;
+  mB[w1] = true;
+  Event A(mA);
+  Event B(mB);
+
+  Event Ac = Event::Complement(A);
+  Event Bc = Event::Complement(B);
+
+  SigmaAlgebra F(omega, {empty, full, A, Ac, B, Bc});
+  EXPECT_FALSE(F.IsSigmaAlgebra());
+}
+
+TEST(SigmaAlgebraTest, Generate_FromSingleGenerator) {
+  using namespace ptm;
+
+  OutcomeSpace omega;
+  auto w0 = omega.AddOutcome("1");
+  auto w1 = omega.AddOutcome("2");
+  auto w2 = omega.AddOutcome("3");
+
+  // A = {1,3}
+  std::vector<bool> mask(omega.GetSize(), false);
+  mask[w0] = true;
+  mask[w2] = true;
+  Event A(mask);
+
+  auto F = SigmaAlgebra::Generate(omega, {A});
+
+  EXPECT_TRUE(F.IsSigmaAlgebra());
+
+  EXPECT_EQ(F.GetEvents().size(), 4u);
+
+  Event Ac = Event::Complement(A);
+  bool hasA = false, hasAc = false;
+  for (const auto& e : F.GetEvents()) {
+    if (e.GetMask() == A.GetMask())  hasA = true;
+    if (e.GetMask() == Ac.GetMask()) hasAc = true;
+  }
+  EXPECT_TRUE(hasA);
+  EXPECT_TRUE(hasAc);
+}

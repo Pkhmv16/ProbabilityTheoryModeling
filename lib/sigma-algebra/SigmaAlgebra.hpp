@@ -4,6 +4,12 @@
 #include "Event.hpp"
 #include "OutcomeSpace.hpp"
 
+#include <algorithm>
+#include <unordered_map>
+#include <stdexcept>
+#include <cstdint>
+#include <cstddef>
+
 namespace ptm {
 
 class SigmaAlgebra {
