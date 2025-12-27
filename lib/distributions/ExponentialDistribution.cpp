@@ -21,7 +21,7 @@ double ExponentialDistribution::Cdf(double x) const {
         return 0;
     }
 
-    return 1 - lambda_ * std::exp(-lambda_ * x);
+    return 1 - std::exp(-lambda_ * x);
 }
 
 double ExponentialDistribution::Sample(std::mt19937& rng) const {
