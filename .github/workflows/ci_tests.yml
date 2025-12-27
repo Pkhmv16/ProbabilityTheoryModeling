@@ -24,12 +24,12 @@ jobs:
       - name: Build main target
         shell: bash
         run: |
-          cmake --build cmake-build-release || echo Built with errors
+          cmake --build cmake-build-release
 
       - name: Build tests target
         shell: bash
         run: |
-          cmake --build cmake-build-debug --target cpp_tests_tests || echo Built with errors
+          cmake --build cmake-build-debug --target cpp_tests_tests
 
       - name: Run program
         working-directory: .\cmake-build-release
