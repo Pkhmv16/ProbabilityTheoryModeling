@@ -110,7 +110,6 @@ jobs:
           fi
 
   memory-leaks:
-    if: false
     name: Find memory leaks in tests
     runs-on: ubuntu-latest
     steps:
