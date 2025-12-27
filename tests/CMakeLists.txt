@@ -5,7 +5,7 @@ add_executable(
         main_test.cpp
         sigma_algebra_tests.cpp
         test_suites/ProjectIntegrationTestSuite.cpp
-        distribu.tions_tests.cpp
+        distributions_tests.cpp
         markov_chain_tests.cpp
         law_of_large_numbers_tests.cpp
 )
